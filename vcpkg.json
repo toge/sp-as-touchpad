@@ -1,0 +1,7 @@
+{
+  "dependencies": [
+    "boost-system",
+    "boost-thread",
+    "crow"
+  ]
+}

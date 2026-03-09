@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tabbed Touch Control</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121212;
+            color: white;
+            font-family: sans-serif;
+        }
+        #nav-bar {
+            height: 80px;
+            background-color: #1f1f1f;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid #333;
+        }
+        .nav-btn {
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
+            background-color: #4caf50;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+        .nav-btn:active {
+            background-color: #45a049;
+        }
+        .nav-btn:disabled {
+            background-color: #333;
+            color: #777;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        #page-info-container {
+            flex-grow: 1;
+            text-align: right;
+            padding-right: 10px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        #touch-area {
+            width: 100vw;
+            height: calc(100vh - 80px);
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: background-color 0.1s;
+            user-select: none;
+        }
+        .button:active {
+            background-color: #3d3d3d;
+            border-color: #4caf50;
+        }
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <!-- ページ切り替えボタンがここに動的に生成されます -->
+        <div id="page-info-container">
+            <div id="page-title">Loading...</div>
+        </div>
+    </div>
+    <div id="touch-area">
+        <div class="button" id="btn-0">...</div>
+        <div class="button" id="btn-1">...</div>
+        <div class="button" id="btn-2">...</div>
+        <div class="button" id="btn-3">...</div>
+    </div>
+    <div id="status">Ready</div>
+
+    <script>
+        const touchArea = document.getElementById('touch-area');
+        const status = document.getElementById('status');
+        const pageTitle = document.getElementById('page-title');
+        const navBar = document.getElementById('nav-bar');
+        const infoContainer = document.getElementById('page-info-container');
+
+        function updatePageInfo() {
+            fetch('/page_info')
+            .then(response => response.json())
+            .then(data => {
+                pageTitle.innerText = data.page_name;
+
+                // ナビゲーションボタンの生成/更新
+                // 既存のボタンを削除（infoContainer以外）
+                const existingBtns = navBar.querySelectorAll('.nav-btn');
+                existingBtns.forEach(btn => btn.remove());
+
+                for (let i = 0; i < data.total_pages; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'nav-btn';
+                    btn.innerText = (i + 1);
+                    btn.onclick = () => setPage(i);
+                    if (i === data.current_page) {
+                        btn.disabled = true;
+                    }
+                    navBar.insertBefore(btn, infoContainer);
+                }
+
+                // メインボタンのラベル更新
+                data.buttons.forEach((btn, index) => {
+                    const el = document.getElementById(`btn-${index}`);
+                    if (el) el.innerText = btn.label;
+                });
+            });
+        }
+
+        function setPage(index) {
+            fetch(`/set_page/${index}`, { method: 'POST' })
+            .then(() => updatePageInfo());
+        }
+
+        function sendClick(x, y) {
+            status.innerText = `Sending: (${x}, ${y})`;
+            fetch('/click', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x: x, y: y }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                status.innerText = `Executed: ${data.command}`;
+                setTimeout(() => { status.innerText = 'Ready'; }, 1500);
+            });
+        }
+
+        touchArea.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = touchArea.getBoundingClientRect();
+            const x = Math.round((touch.clientX - rect.left) / rect.width * 1000);
+            const y = Math.round((touch.clientY - rect.top) / rect.height * 1000);
+            sendClick(x, y);
+        }, { passive: false });
+
+        touchArea.addEventListener('mousedown', function(e) {
+            const rect = touchArea.getBoundingClientRect();
+            const x = Math.round((e.clientX - rect.left) / rect.width * 1000);
+            const y = Math.round((e.clientY - rect.top) / rect.height * 1000);
+            sendClick(x, y);
+        });
+
+        // 初期化
+        updatePageInfo();
+    </script>
+</body>
+</html>
