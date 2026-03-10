@@ -61,14 +61,11 @@
             width: 100vw;
             height: calc(100vh - 80px);
             position: relative;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 10px;
-            padding: 10px;
+            overflow: hidden;
             box-sizing: border-box;
         }
         .button {
+            position: absolute;
             background-color: #1e1e1e;
             border: 2px solid #333;
             border-radius: 15px;
@@ -78,6 +75,11 @@
             font-size: 2rem;
             transition: background-color 0.1s;
             user-select: none;
+            padding: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+            overflow-wrap: anywhere;
+            touch-action: manipulation;
         }
         .button:active {
             background-color: #3d3d3d;
@@ -104,12 +106,7 @@
             <div id="page-title">Loading...</div>
         </div>
     </div>
-    <div id="touch-area">
-        <div class="button" id="btn-0">...</div>
-        <div class="button" id="btn-1">...</div>
-        <div class="button" id="btn-2">...</div>
-        <div class="button" id="btn-3">...</div>
-    </div>
+    <div id="touch-area"></div>
     <div id="status">Ready</div>
 
     <script>
@@ -118,6 +115,51 @@
         const pageTitle = document.getElementById('page-title');
         const navBar = document.getElementById('nav-bar');
         const infoContainer = document.getElementById('page-info-container');
+        const BUTTON_GAP_PX = 8;
+
+        function toPercent(value) {
+            return `${(value / 10).toFixed(4)}%`;
+        }
+
+        function positionButton(el, btn) {
+            el.style.left = `calc(${toPercent(btn.x1)} + ${BUTTON_GAP_PX}px)`;
+            el.style.top = `calc(${toPercent(btn.y1)} + ${BUTTON_GAP_PX}px)`;
+            el.style.width = `calc(${toPercent(btn.x2 - btn.x1)} - ${BUTTON_GAP_PX * 2}px)`;
+            el.style.height = `calc(${toPercent(btn.y2 - btn.y1)} - ${BUTTON_GAP_PX * 2}px)`;
+        }
+
+        function sendRegionClick(btn) {
+            const x = Math.round((btn.x1 + btn.x2) / 2);
+            const y = Math.round((btn.y1 + btn.y2) / 2);
+            sendClick(x, y);
+        }
+
+        function createButton(btn, index) {
+            const el = document.createElement('button');
+            el.className = 'button';
+            el.id = `btn-${index}`;
+            el.type = 'button';
+            el.innerText = btn.label;
+            positionButton(el, btn);
+            el.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                sendRegionClick(btn);
+            }, { passive: false });
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                sendRegionClick(btn);
+            });
+            return el;
+        }
+
+        function renderButtons(buttons) {
+            touchArea.replaceChildren();
+            buttons.forEach((btn, index) => {
+                touchArea.appendChild(createButton(btn, index));
+            });
+        }
 
         function updatePageInfo() {
             fetch('/page_info')
@@ -138,14 +180,10 @@
                     if (i === data.current_page) {
                         btn.disabled = true;
                     }
-                    navBar.insertBefore(btn, infoContainer);
+                    infoContainer.before(btn);
                 }
 
-                // メインボタンのラベル更新
-                data.buttons.forEach((btn, index) => {
-                    const el = document.getElementById(`btn-${index}`);
-                    if (el) el.innerText = btn.label;
-                });
+                renderButtons(data.buttons);
             });
         }
 

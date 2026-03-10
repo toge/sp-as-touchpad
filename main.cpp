@@ -53,14 +53,13 @@ int main() {
     auto app = crow::SimpleApp{};
 
     // メインページ
-    CROW_ROUTE(app, "/")
+    CROW_ROUTE(app, "/").methods(crow::HTTPMethod::Get)
     ([]() {
-        auto page = crow::mustache::load_text("index.html");
-        return page;
+        return crow::mustache::load_text("index.html");
     });
 
     // 現在のページ情報を取得
-    CROW_ROUTE(app, "/page_info")
+    CROW_ROUTE(app, "/page_info").methods(crow::HTTPMethod::Get)
     ([]() {
         auto res = crow::json::wvalue{};
         res["current_page"] = current_page_index;
@@ -90,12 +89,12 @@ int main() {
     // 特定のページに切り替え
     CROW_ROUTE(app, "/set_page/<int>").methods(crow::HTTPMethod::POST)
     ([](int page_idx) {
-        if (page_idx >= 0 && page_idx < (int)pages.size()) {
-            current_page_index = page_idx;
-            std::cout << "Switched to page: " << current_page_index << " (" << pages[current_page_index].name << ")" << std::endl;
-            return crow::response(200, std::to_string(current_page_index));
+        if (page_idx < 0 || page_idx >= static_cast<int>(pages.size())) {
+            return crow::response(400, "Invalid page index");
         }
-        return crow::response(400, "Invalid page index");
+        current_page_index = page_idx;
+        std::cout << "Switched to page: " << current_page_index << " (" << pages[current_page_index].name << ")\n";
+        return crow::response(200, std::to_string(current_page_index));
     });
 
     // クリックイベント
@@ -106,8 +105,8 @@ int main() {
             return crow::response(400, "Invalid JSON");
         }
 
-        int click_x = x["x"].i();
-        int click_y = x["y"].i();
+        auto const click_x = x["x"].i();
+        auto const click_y = x["y"].i();
 
         auto executed_cmd = std::string{"None"};
         auto const& current_regions = pages[current_page_index].regions;
@@ -116,7 +115,7 @@ int main() {
             if (click_x >= region.x1 && click_x <= region.x2 &&
                 click_y >= region.y1 && click_y <= region.y2) {
 
-                std::cout << "[" << pages[current_page_index].name << "] Executing: " << region.command << std::endl;
+                std::cout << "[" << pages[current_page_index].name << "] Executing: " << region.command << "\n";
                 std::system(region.command.c_str());
                 executed_cmd = region.command;
                 break;
