@@ -2,6 +2,7 @@
   "dependencies": [
     "boost-system",
     "boost-thread",
-    "crow"
+    "crow",
+    "magic-args"
   ]
 }

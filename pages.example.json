@@ -1,0 +1,115 @@
+{
+  "pages": [
+    {
+      "name": "Media Control",
+      "regions": [
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 500,
+          "y2": 500,
+          "command": "echo 'Volume Up'",
+          "label": "Vol +"
+        },
+        {
+          "x1": 500,
+          "y1": 0,
+          "x2": 1000,
+          "y2": 500,
+          "command": "echo 'Volume Down'",
+          "label": "Vol -"
+        },
+        {
+          "x1": 0,
+          "y1": 500,
+          "x2": 500,
+          "y2": 1000,
+          "command": "echo 'Previous Track'",
+          "label": "Prev"
+        },
+        {
+          "x1": 500,
+          "y1": 500,
+          "x2": 1000,
+          "y2": 1000,
+          "command": "echo 'Next Track'",
+          "label": "Next"
+        }
+      ]
+    },
+    {
+      "name": "App Launchers",
+      "regions": [
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 500,
+          "y2": 500,
+          "command": "echo 'Opening Browser'",
+          "label": "Browser"
+        },
+        {
+          "x1": 500,
+          "y1": 0,
+          "x2": 1000,
+          "y2": 500,
+          "command": "echo 'Opening Terminal'",
+          "label": "Terminal"
+        },
+        {
+          "x1": 0,
+          "y1": 500,
+          "x2": 500,
+          "y2": 1000,
+          "command": "echo 'Opening Editor'",
+          "label": "Editor"
+        },
+        {
+          "x1": 500,
+          "y1": 500,
+          "x2": 1000,
+          "y2": 1000,
+          "command": "echo 'Opening Files'",
+          "label": "Files"
+        }
+      ]
+    },
+    {
+      "name": "System Commands",
+      "regions": [
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 500,
+          "y2": 500,
+          "command": "echo 'Lock Screen'",
+          "label": "Lock"
+        },
+        {
+          "x1": 500,
+          "y1": 0,
+          "x2": 1000,
+          "y2": 500,
+          "command": "echo 'Sleep Mode'",
+          "label": "Sleep"
+        },
+        {
+          "x1": 0,
+          "y1": 500,
+          "x2": 500,
+          "y2": 1000,
+          "command": "echo 'Restart'",
+          "label": "Restart"
+        },
+        {
+          "x1": 500,
+          "y1": 500,
+          "x2": 1000,
+          "y2": 1000,
+          "command": "echo 'Shutdown'",
+          "label": "Power Off"
+        }
+      ]
+    }
+  ]
+}
