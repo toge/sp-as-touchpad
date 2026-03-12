@@ -219,6 +219,14 @@ int main(int argc, char* argv[]) {
         return crow::mustache::load_text("index.html");
     });
 
+    // JavaScriptファイル
+    CROW_ROUTE(app, "/index.js").methods(crow::HTTPMethod::Get)
+    ([]() {
+        auto res = crow::response{crow::mustache::load_text("index.js")};
+        res.add_header("Content-Type", "application/javascript");
+        return res;
+    });
+
     // 現在のページ情報を取得
     CROW_ROUTE(app, "/page_info").methods(crow::HTTPMethod::Get)
     ([]() {
