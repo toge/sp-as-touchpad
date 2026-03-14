@@ -5,15 +5,21 @@ const navBar = document.getElementById('nav-bar');
 const infoContainer = document.getElementById('page-info-container');
 const BUTTON_GAP_PX = 8;
 
-function toPercent(value) {
-    return `${(value / 10).toFixed(4)}%`;
-}
+// Current page coordinate range (updated when buttons are rendered)
+let coordMinX = 0;
+let coordMinY = 0;
+let coordRangeX = 1000;
+let coordRangeY = 1000;
 
 function positionButton(el, btn) {
-    el.style.left = `calc(${toPercent(btn.x1)} + ${BUTTON_GAP_PX}px)`;
-    el.style.top = `calc(${toPercent(btn.y1)} + ${BUTTON_GAP_PX}px)`;
-    el.style.width = `calc(${toPercent(btn.x2 - btn.x1)} - ${BUTTON_GAP_PX * 2}px)`;
-    el.style.height = `calc(${toPercent(btn.y2 - btn.y1)} - ${BUTTON_GAP_PX * 2}px)`;
+    const leftPct = (btn.x1 - coordMinX) / coordRangeX * 100;
+    const topPct = (btn.y1 - coordMinY) / coordRangeY * 100;
+    const widthPct = (btn.x2 - btn.x1) / coordRangeX * 100;
+    const heightPct = (btn.y2 - btn.y1) / coordRangeY * 100;
+    el.style.left = `calc(${leftPct.toFixed(4)}% + ${BUTTON_GAP_PX}px)`;
+    el.style.top = `calc(${topPct.toFixed(4)}% + ${BUTTON_GAP_PX}px)`;
+    el.style.width = `calc(${widthPct.toFixed(4)}% - ${BUTTON_GAP_PX * 2}px)`;
+    el.style.height = `calc(${heightPct.toFixed(4)}% - ${BUTTON_GAP_PX * 2}px)`;
 }
 
 function sendRegionClick(btn) {
@@ -44,6 +50,20 @@ function createButton(btn, index) {
 
 function renderButtons(buttons) {
     touchArea.replaceChildren();
+    if (buttons.length > 0) {
+        let minX = buttons[0].x1, minY = buttons[0].y1;
+        let maxX = buttons[0].x2, maxY = buttons[0].y2;
+        for (const b of buttons) {
+            if (b.x1 < minX) minX = b.x1;
+            if (b.y1 < minY) minY = b.y1;
+            if (b.x2 > maxX) maxX = b.x2;
+            if (b.y2 > maxY) maxY = b.y2;
+        }
+        coordMinX = minX;
+        coordMinY = minY;
+        coordRangeX = maxX - minX || 1;
+        coordRangeY = maxY - minY || 1;
+    }
     buttons.forEach((btn, index) => {
         touchArea.appendChild(createButton(btn, index));
     });
@@ -98,15 +118,15 @@ touchArea.addEventListener('touchstart', function(e) {
     e.preventDefault();
     const touch = e.touches[0];
     const rect = touchArea.getBoundingClientRect();
-    const x = Math.round((touch.clientX - rect.left) / rect.width * 1000);
-    const y = Math.round((touch.clientY - rect.top) / rect.height * 1000);
+    const x = Math.round((touch.clientX - rect.left) / rect.width * coordRangeX + coordMinX);
+    const y = Math.round((touch.clientY - rect.top) / rect.height * coordRangeY + coordMinY);
     sendClick(x, y);
 }, { passive: false });
 
 touchArea.addEventListener('mousedown', function(e) {
     const rect = touchArea.getBoundingClientRect();
-    const x = Math.round((e.clientX - rect.left) / rect.width * 1000);
-    const y = Math.round((e.clientY - rect.top) / rect.height * 1000);
+    const x = Math.round((e.clientX - rect.left) / rect.width * coordRangeX + coordMinX);
+    const y = Math.round((e.clientY - rect.top) / rect.height * coordRangeY + coordMinY);
     sendClick(x, y);
 });
 
