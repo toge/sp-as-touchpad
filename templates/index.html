@@ -97,6 +97,105 @@
             pointer-events: none;
             z-index: 100;
         }
+        #qr-btn {
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
+            background-color: #2196F3;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        #qr-btn:active {
+            background-color: #1565C0;
+        }
+        #qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        #qr-modal.open {
+            display: flex;
+        }
+        #qr-modal-content {
+            background: #1f1f1f;
+            border: 1px solid #444;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            max-width: 90vw;
+            position: relative;
+        }
+        #qr-modal-title {
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 16px;
+        }
+        #qr-code-container {
+            background: white;
+            display: inline-block;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        #qr-url-list {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .qr-url-item {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #ccc;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .qr-url-item.selected {
+            border-color: #2196F3;
+            color: white;
+        }
+        .qr-url-item:hover {
+            background-color: #333;
+        }
+        #qr-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        #qr-close-btn:hover {
+            color: white;
+            background-color: #333;
+        }
+        #qr-no-ip {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -105,10 +204,23 @@
         <div id="page-info-container">
             <div id="page-title">Loading...</div>
         </div>
+        <button id="qr-btn" title="接続用QRコードを表示">&#x1F4F1;</button>
     </div>
     <div id="touch-area"></div>
     <div id="status">Ready</div>
 
+    <!-- QRコードモーダル -->
+    <div id="qr-modal" role="dialog" aria-modal="true" aria-label="接続用QRコード">
+        <div id="qr-modal-content">
+            <button id="qr-close-btn" aria-label="閉じる">&#x2715;</button>
+            <div id="qr-modal-title">このサーバーに接続</div>
+            <div id="qr-code-container"></div>
+            <div id="qr-url-list"></div>
+            <div id="qr-no-ip" style="display:none;">ローカルIPアドレスが見つかりませんでした</div>
+        </div>
+    </div>
+
+    <script src="/qrcode.min.js"></script>
     <script src="/index.js"></script>
 </body>
 </html>

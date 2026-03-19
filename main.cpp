@@ -7,6 +7,9 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
 
 #include "crow.h"
 #include "magic_args/magic_args.hpp"
@@ -188,6 +191,31 @@ std::vector<Page> load_pages_from_json_file(const std::string& path) {
 std::vector<Page> pages = make_default_pages();
 int current_page_index = 0;
 
+std::vector<std::string> get_local_ips() {
+    auto ips = std::vector<std::string>{};
+    struct ifaddrs* ifaddr = nullptr;
+    if (getifaddrs(&ifaddr) == -1) {
+        std::cerr << "get_local_ips: getifaddrs failed\n";
+        return ips;
+    }
+    for (const struct ifaddrs* current_if = ifaddr; current_if != nullptr; current_if = current_if->ifa_next) {
+        if (current_if->ifa_addr == nullptr) {
+            continue;
+        }
+        if (current_if->ifa_addr->sa_family == AF_INET) {
+            char host[INET_ADDRSTRLEN];
+            const auto* addr = reinterpret_cast<const struct sockaddr_in*>(current_if->ifa_addr);
+            inet_ntop(AF_INET, &addr->sin_addr, host, INET_ADDRSTRLEN);
+            auto ip = std::string{host};
+            if (ip != "127.0.0.1") {
+                ips.push_back(ip);
+            }
+        }
+    }
+    freeifaddrs(ifaddr);
+    return ips;
+}
+
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -224,6 +252,27 @@ int main(int argc, char* argv[]) {
     ([]() {
         auto res = crow::response{crow::mustache::load_text("index.js")};
         res.add_header("Content-Type", "application/javascript");
+        return res;
+    });
+
+    // QRコードライブラリ
+    CROW_ROUTE(app, "/qrcode.min.js").methods(crow::HTTPMethod::Get)
+    ([]() {
+        auto res = crow::response{crow::mustache::load_text("qrcode.min.js")};
+        res.add_header("Content-Type", "application/javascript");
+        return res;
+    });
+
+    // ローカルIPアドレス一覧を取得
+    CROW_ROUTE(app, "/local_ips").methods(crow::HTTPMethod::Get)
+    ([]() {
+        auto ips = get_local_ips();
+        auto res = crow::json::wvalue{};
+        auto ip_list = crow::json::wvalue::list{};
+        for (const auto& ip : ips) {
+            ip_list.push_back(ip);
+        }
+        res["ips"] = std::move(ip_list);
         return res;
     });
 
