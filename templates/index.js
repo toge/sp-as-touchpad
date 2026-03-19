@@ -132,3 +132,71 @@ touchArea.addEventListener('mousedown', function(e) {
 
 // 初期化
 updatePageInfo();
+
+// QRコード機能
+const qrBtn = document.getElementById('qr-btn');
+const qrModal = document.getElementById('qr-modal');
+const qrCloseBtn = document.getElementById('qr-close-btn');
+const qrCodeContainer = document.getElementById('qr-code-container');
+const qrUrlList = document.getElementById('qr-url-list');
+const qrNoIp = document.getElementById('qr-no-ip');
+const SERVER_PORT = 8080;
+
+let qrInstance = null;
+
+function generateQrCode(url) {
+    qrCodeContainer.innerHTML = '';
+    qrInstance = new QRCode(qrCodeContainer, {
+        text: url,
+        width: 256,
+        height: 256,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+    });
+}
+
+function showQrModal() {
+    fetch('/local_ips')
+        .then(response => response.json())
+        .then(data => {
+            const ips = data.ips || [];
+            qrUrlList.innerHTML = '';
+            qrCodeContainer.innerHTML = '';
+            qrNoIp.style.display = 'none';
+
+            if (ips.length === 0) {
+                qrNoIp.style.display = 'block';
+            } else {
+                const firstUrl = `http://${ips[0]}:${SERVER_PORT}`;
+                generateQrCode(firstUrl);
+
+                ips.forEach((ip, idx) => {
+                    const url = `http://${ip}:${SERVER_PORT}`;
+                    const item = document.createElement('div');
+                    item.className = 'qr-url-item' + (idx === 0 ? ' selected' : '');
+                    item.textContent = url;
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.qr-url-item').forEach(el => el.classList.remove('selected'));
+                        item.classList.add('selected');
+                        generateQrCode(url);
+                    });
+                    qrUrlList.appendChild(item);
+                });
+            }
+
+            qrModal.classList.add('open');
+        });
+}
+
+qrBtn.addEventListener('click', showQrModal);
+
+qrCloseBtn.addEventListener('click', () => {
+    qrModal.classList.remove('open');
+});
+
+qrModal.addEventListener('click', (e) => {
+    if (e.target === qrModal) {
+        qrModal.classList.remove('open');
+    }
+});
